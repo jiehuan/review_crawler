@@ -4,7 +4,7 @@ import numpy as np
 import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options  
+from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException
 import time
 
@@ -14,7 +14,7 @@ def index_marks(nrows, chunk_size):
 def split(dfm, chunk_size):
     indices = index_marks(dfm.shape[0], chunk_size)
     return np.split(dfm, indices)
-    
+
 def phone_str(phone):
     num_l = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
     p = ''
@@ -25,25 +25,24 @@ def phone_str(phone):
 
 def crawler(group, outfile):
     data = pd.read_csv("data_mean.csv", dtype = {'ZIPCODE':str, 'PHONE':str, 'CAMIS':str})
-    
     chunks = split(data, 250)
     chunks_reidx = []
     for i in range(len(chunks)):
         chunks_reidx.append(chunks[i].reset_index())
-    
+
     chrome_options = Options()
     chrome_options.add_argument('--headless')
     chrome_options.add_argument('--disable-gpu')
-    
+
     browser = webdriver.Chrome(chrome_options=chrome_options, executable_path='./chromedriver.exe')
     result = []
     df = chunks_reidx[group]
-    
+
     for i in range(len(df)):
         dba = df.DBA[i]
         zip_code = df.ZIPCODE[i]
         CAMIS = df.CAMIS[i]
-        url = 'https://www.yelp.com/search?find_desc='+ dba +'&find_loc='+ zip_code  
+        url = 'https://www.yelp.com/search?find_desc='+ dba +'&find_loc='+ zip_code
 
         try:
             browser.get(url)
@@ -85,7 +84,7 @@ def crawler(group, outfile):
                     "review": review[j].p.text
                 }
                 rev.append(r)
-            
+
         except Exception:
             print ('error', name)
             pass
@@ -118,7 +117,7 @@ def crawler(group, outfile):
         except Exception:
             price = 'NA'
             pass
-        
+
         res = {
             "name" : name,
             "phone": phone,
@@ -137,14 +136,14 @@ def crawler(group, outfile):
                 json.dump(result, outfile)
 
     browser.quit()
-    
+
     with open(fileout, 'w') as outfile:
         json.dump(result, outfile)
     print('Finish')
-    
+
 if __name__ == '__main__':
     filenames = sys.argv
-    
+
     group = int(filenames[1])
     fileout = filenames [2]
 
