@@ -26,7 +26,7 @@ def phone_str(phone):
 def crawler(group, outfile):
     data = pd.read_csv("data_mean.csv", dtype = {'ZIPCODE':str, 'PHONE':str, 'CAMIS':str})
     
-    chunks = split(data, 250)
+    chunks = split(data, 1000)
     chunks_reidx = []
     for i in range(len(chunks)):
         chunks_reidx.append(chunks[i].reset_index())
@@ -43,7 +43,13 @@ def crawler(group, outfile):
         dba = df.DBA[i]
         zip_code = df.ZIPCODE[i]
         CAMIS = df.CAMIS[i]
-        url = 'https://www.yelp.com/search?find_desc='+ dba +'&find_loc='+ zip_code  
+        url = 'https://www.yelp.com/search?find_desc='+ dba +'&find_loc='+ zip_code
+        name = ''
+        phone = ''
+        latitude = ''
+        longitude = ''
+        address = ''
+        rev = []
 
         try:
             browser.get(url)
@@ -53,15 +59,17 @@ def crawler(group, outfile):
             browser.execute_script('arguments[0].click();',review_c)
 
             time.sleep(2)
-
-            drop_c = browser.find_element_by_xpath('//span[@data-dropdown-initial-text="Yelp Sort"]')
-            drop_c.location_once_scrolled_into_view
-            time.sleep(0.5)
-            browser.execute_script('arguments[0].click();',drop_c)
-            time.sleep(0.5)
-            newest = browser.find_element_by_xpath('//a[@data-review-feed-label="Newest First"]')
-            browser.execute_script('arguments[0].click();',newest)
-            time.sleep(2)
+            try:
+                drop_c = browser.find_element_by_xpath('//span[@data-dropdown-initial-text="Yelp Sort"]')
+                drop_c.location_once_scrolled_into_view
+                time.sleep(0.5)
+                browser.execute_script('arguments[0].click();',drop_c)
+                time.sleep(0.5)
+                newest = browser.find_element_by_xpath('//a[@data-review-feed-label="Newest First"]')
+                browser.execute_script('arguments[0].click();',newest)
+                time.sleep(2)
+            except Exception:
+                pass
 
             soup = BeautifulSoup(browser.page_source, 'lxml')
 
@@ -77,7 +85,6 @@ def crawler(group, outfile):
             address = soup.find('div', class_='map-box-address u-space-l4').address.text.strip()
 
             review = soup.find_all('div', class_='review-content')
-            rev = []
             for j in range(len(review)):
                 r = {
                     "date": review[j].span.text.strip()[0:10],
@@ -87,7 +94,7 @@ def crawler(group, outfile):
                 rev.append(r)
             
         except Exception:
-            print ('error', name)
+            print ('error', url)
             pass
 
         while True:
